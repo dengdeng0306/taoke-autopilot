@@ -1,0 +1,19 @@
+{
+  "name": "taoke-autopilot",
+  "version": "0.1.0",
+  "description": "淘宝联盟自动化运营系统 - 选品/推广/追踪/风控",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "collect": "node src/modules/collector/run.js",
+    "report": "node src/modules/reporter/run.js",
+    "link": "node src/modules/linker/run.js",
+    "track": "node src/modules/tracker/run.js",
+    "monitor": "node src/modules/monitor/run.js",
+    "daily": "node src/main.js daily",
+    "full": "node src/main.js full"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

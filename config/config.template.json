@@ -1,0 +1,54 @@
+{
+  "_说明": "选品规则配置 - 复制此文件为 config.json 并填入实际值",
+
+  "platform": {
+    "alimama": {
+      "loginUrl": "https://pub.alimama.com/portal/v2/pages/promo/goods/index.htm",
+      "username": "xiaodengdeng_2009",
+      "_password": "建议使用环境变量 ALIMAMA_PWD"
+    }
+  },
+
+  "collect": {
+    "outputDir": "output/商品库",
+    "maxProducts": 30,
+    "sorts": [
+      { "key": "max_tk_rate:des", "label": "佣金率降序" },
+      { "key": "commi:des", "label": "佣金金额降序" }
+    ],
+    "searchKeywords": [""],
+    "filters": {
+      "minRate": 0,
+      "minCommission": 0,
+      "excludeVirtualGoods": true,
+      "minShopScore": 0
+    }
+  },
+
+  "linker": {
+    "defaultAdzoneId": "",
+    "maxDailyLinks": 20,
+    "retryOnFail": 2
+  },
+
+  "monitor": {
+    "checkIntervalHours": 24,
+    "alerts": {
+      "rateDropThreshold": 0.2,
+      "refundRateThreshold": 0.3,
+      "loginFailureThreshold": 3
+    },
+    "notify": {
+      "channel": "feishu",
+      "target": "",
+      "dailyReport": true,
+      "emergencyAlert": true
+    }
+  },
+
+  "output": {
+    "baseDir": "E:\\淘宝联盟",
+    "csvEncoding": "utf8-bom",
+    "dailyReportTime": "20:00"
+  }
+}
