@@ -88,7 +88,7 @@ function buildDailyHTML(data, date) {
   const stats = data.stats || {};
   
   return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>淘客日报 - ${date}</title>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>淘客日报 - ${date}</title>
 <style>
 body{font-family:微软雅黑,sans-serif;margin:30px;background:#f8f9fa}
 h2{color:#333;border-bottom:3px solid #4472C4;padding-bottom:10px}
