@@ -3,16 +3,24 @@
  * 调度各模块运行
  * 
  * 用法:
- *   node src/main.js daily       - 日常任务（合并候选池+生成日报）
- *   node src/main.js full        - 全量任务
- *   node src/main.js report      - 从候选池生成日报
- *   node src/main.js collect     - 仅采集候选池（接收浏览器数据）
+ *   node src/main.js              - 日常任务
+ *   node src/main.js daily        - 日常任务（日报+待推广统计）
+ *   node src/main.js full         - 全量任务（日报+推广+收益+风控）
+ *   node src/main.js report       - 仅生成日报
+ *   node src/main.js link [limit] - 批量生成推广链接
+ *   node src/main.js track        - 收益追踪（从浏览器提取数据）
+ *   node src/main.js trend        - 收益趋势分析
+ *   node src/main.js status       - 项目全状态查看
  */
 
+import path from 'path';
+import fs from 'fs';
 import { now, logger } from './utils/csv.js';
 import { generateDailyReport } from './modules/reporter/index.js';
 import { getPendingProducts, updateProductStatus } from './modules/collector/pool.js';
-import { evaluateAlerts, sendAlert, ALERT_LEVELS } from './modules/monitor/index.js';
+import { evaluateAlerts } from './modules/monitor/index.js';
+import { batchGenerateLinks } from './modules/linker/index.js';
+import { recordEarnings, mergeTrend, EXTRACT_EARNINGS } from './modules/tracker/index.js';
 
 const MODE = process.argv[2] || 'daily';
 
@@ -122,6 +130,44 @@ function runCollect(jsonData, sortLabel = '佣金率降序') {
   return processPageData(jsonData, sortLabel);
 }
 
+/**
+ * 显示项目全状态
+ */
+function showStatus() {
+  const { date } = now();
+  
+  // 候选池统计
+  const pool = getPendingProducts(50);
+  const pendingCount = pool.filter(p => p['状态'] === '待推广').length;
+  const promotedCount = pool.filter(p => p['状态'] === '已推广').length;
+  const failedCount = pool.filter(p => p['状态'] === '推广失败').length;
+
+  // 报表统计
+  const reportDir = path.resolve('output/日报');
+  let reportCount = 0;
+  if (fs.existsSync(reportDir)) {
+    reportCount = fs.readdirSync(reportDir).filter(f => f.startsWith('日报_')).length;
+  }
+
+  console.log(`\n📊 淘客自动化系统状态`);
+  console.log(`────────────────────`);
+  console.log(`日期: ${date}`);
+  console.log(`候选池: ${pool.length} 个商品`);
+  console.log(`  ├ 待推广: ${pendingCount}`);
+  console.log(`  ├ 已推广: ${promotedCount}`);
+  console.log(`  └ 推广失败: ${failedCount}`);
+  console.log(`已生成日报: ${reportCount} 份`);
+
+  // 候选池TOP预览
+  if (pool.length > 0) {
+    const sorted = [...pool].sort((a, b) => parseFloat(b['佣金_元'] || 0) - parseFloat(a['佣金_元'] || 0));
+    console.log(`\n佣金金额TOP5:`);
+    sorted.slice(0, 5).forEach((p, i) => {
+      console.log(`  #${i+1} ¥${p['佣金_元']} | ${p['佣金率']} | ${(p['商品名称'] || '').slice(0, 22)}`);
+    });
+  }
+}
+
 async function main() {
   try {
     switch (MODE) {
@@ -134,12 +180,36 @@ async function main() {
       case 'report':
         generateReportFromPool();
         break;
+      case 'link': {
+        const limit = parseInt(process.argv[3]) || 5;
+        logger('main', `开始批量推广: ${limit} 个`);
+        const results = await batchGenerateLinks(limit);
+        process.exit(0);
+      }
+      case 'track':
+        logger('main', '收益追踪模式');
+        console.log('\n在浏览器中执行以下脚本提取收益数据:');
+        console.log('---');
+        console.log(EXTRACT_EARNINGS.trim());
+        console.log('---');
+        break;
+      case 'trend':
+        logger('main', '收益趋势分析');
+        mergeTrend();
+        break;
+      case 'status':
+        showStatus();
+        break;
       default:
-        console.log('用法: node src/main.js [daily|full|report]');
+        console.log('用法: node src/main.js [daily|full|report|link|track|trend|status]');
         console.log('');
-        console.log('  daily  日常任务（从候选池生成日报）');
-        console.log('  full   全量任务（日报+风控+调度）');
-        console.log('  report 仅生成日报');
+        console.log('  daily        日常任务（从候选池生成日报）');
+        console.log('  full         全量任务（日报+风控+调度）');
+        console.log('  report       仅生成日报');
+        console.log('  link [limit] 批量生成推广链接');
+        console.log('  track        收益追踪（需浏览器数据）');
+        console.log('  trend        收益趋势分析');
+        console.log('  status       项目全状态查看');
         process.exit(1);
     }
   } catch (err) {

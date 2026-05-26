@@ -5,13 +5,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "collect": "node src/modules/collector/run.js",
-    "report": "node src/modules/reporter/run.js",
-    "link": "node src/modules/linker/run.js",
-    "track": "node src/modules/tracker/run.js",
-    "monitor": "node src/modules/monitor/run.js",
+    "report": "node src/main.js report",
     "daily": "node src/main.js daily",
-    "full": "node src/main.js full"
+    "full": "node src/main.js full",
+    "link": "node src/main.js link",
+    "track": "node src/main.js track",
+    "trend": "node src/main.js trend",
+    "status": "node src/main.js status"
   },
   "engines": {
     "node": ">=18"
